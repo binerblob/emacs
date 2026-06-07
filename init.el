@@ -49,5 +49,10 @@
 (setq auto-save-file-name-transforms `((".*" "~/.local/share/emacs/auto-saves/" t)))
 
 ;; Point Custom file to an another location
-(setq custom-file "~/.config/emacs/custom.el")
+(setq custom-file
+      (expand-file-name "custom.el" user-emacs-directory))
+
+(unless (file-exists-p custom-file)
+  (write-region "" nil custom-file))
+
 (load custom-file)

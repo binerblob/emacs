@@ -40,5 +40,5 @@
     (define-key meow-vterm-normal-mode-map (vector 'remap (car c)) (cdr c)))
   (add-hook 'vterm-mode-hook #'meow-vterm-setup))
 
-(meow-vterm-enable)
-
+(with-eval-after-load 'meow 
+                      (meow-vterm-enable))

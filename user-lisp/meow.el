@@ -7,6 +7,12 @@
     (meow-motion-define-key
      '("j" . meow-next)
      '("k" . meow-prev)
+
+     '("C-x u" . ignore)     
+     '("C-_"   . ignore)
+     '("C-/"   . ignore)
+     '("C-M-_" . ignore)
+
      '("<escape>" . ignore))
     (meow-leader-define-key
      ;; Use SPC (0-9) for digit arguments.
@@ -72,7 +78,15 @@
      '("R" . meow-swap-grab)
      '("s" . meow-kill)
      '("t" . meow-till)
-     '("u" . meow-undo)
+
+     '("C-x u" . ignore)     
+     '("C-_"   . ignore)
+     '("C-/"   . ignore)
+     '("u"     . undo)
+
+     '("C-M-_" . ignore)
+     '("C-r"   . undo-redo)
+
      '("U" . meow-undo-in-selection)
      '("v" . meow-visit)
      '("w" . meow-mark-word)
@@ -83,9 +97,10 @@
      '("Y" . meow-sync-grab)
      '("z" . meow-pop-selection)
      '("'" . repeat)
-     '("<escape>" . ignore)
-     '("<return>" . ignore)
+
+     '("<escape>"    . ignore)
+     '("<return>"    . ignore)
      '("<backspace>" . ignore))))
-(require 'meow)
+
 (meow-setup)
 (meow-global-mode 1)

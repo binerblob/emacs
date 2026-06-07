@@ -7,15 +7,18 @@
 (load-files-from-directory
  "~/.config/emacs/user-lisp/"
  '(
-   ;; Modal editing
-   "meow.el"
+   ;; Editing mode ("meow.el", "view.el", "evil.el", "boon.el")
+   "emacs.el"
 
+   ;; Multiple cursors
+   "multiple-cursors.el"
+   
    ;; Terminal emulator
    "vterm.el"
-
+   
    ;; fzf-lua/telescope-like functionality
    "vertico.el"
-
+   
    ;; Smooth scrolling
    "ultra-scroll.el"))
 
@@ -31,10 +34,20 @@
 ;; Org-mode config
 (require 'org)
 (setq org-pretty-entities t)
+(setq org-hide-emphasis-markers t)
 (add-hook 'org-mode-hook (lambda () (display-line-numbers-mode -1)))
 
+;; Image-mode config
+(add-hook 'image-mode-hook
+          (lambda ()
+            ;; Disable line numbers
+            (display-line-numbers-mode -1)
+            ;; Hide the cursor
+            (blink-cursor-mode 0)
+	    (setq cursor-type nil)))
+
 ;; General Emacs config
-(set-face-attribute 'default nil :family "Iosevka Nerd Font" :height 130 :weight 'normal)
+(set-face-attribute 'default nil :family "Iosevka Nerd Font" :height 140 :weight 'normal)
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)

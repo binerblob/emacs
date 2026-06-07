@@ -5,4 +5,5 @@
 
 /history
 /custom.el
-/.#*
+
+.#*

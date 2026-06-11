@@ -2,8 +2,13 @@
 /eln-cache/
 /elpa/
 /eshell/
+/transient/
 
 /history
+/recentf
+/persist-text-sclae
+
+/.mc-lists.el
 /custom.el
 
 .#*

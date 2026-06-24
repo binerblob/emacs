@@ -8,6 +8,10 @@
 /history
 /recentf
 /persist-text-scale
+/projects
+
+/.dap-breakpoints
+/.lsp-session-v1
 
 /.mc-lists.el
 /custom.el

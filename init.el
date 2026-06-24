@@ -1,11 +1,41 @@
-;;#---------------#;;
-;;# Prerequisites #;;
-;;#---------------#;;
+;;; -*- lexical-binding: t -*-
 
-;; Extra package repo
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
+;;;  __       __                                                              __           
+;;; /  \     /  |                                                            /  |          
+;;; $$  \   /$$ |  ______    _______   ______    ______    ______   _______  $$/   _______ 
+;;; $$$  \ /$$$ | /      \  /       | /      \  /      \  /      \ /       \ /  | /       |
+;;; $$$$  /$$$$ | $$$$$$  |/$$$$$$$/  $$$$$$  |/$$$$$$  |/$$$$$$  |$$$$$$$  |$$ |/$$$$$$$/ 
+;;; $$ $$ $$/$$ | /    $$ |$$ |       /    $$ |$$ |  $$/ $$ |  $$ |$$ |  $$ |$$ |$$      \ 
+;;; $$ |$$$/ $$ |/$$$$$$$ |$$ \_____ /$$$$$$$ |$$ |      $$ \__$$ |$$ |  $$ |$$ | $$$$$$  |
+;;; $$ | $/  $$ |$$    $$ |$$       |$$    $$ |$$ |      $$    $$/ $$ |  $$ |$$ |/     $$/ 
+;;; $$/      $$/  $$$$$$$/  $$$$$$$/  $$$$$$$/ $$/        $$$$$$/  $$/   $$/ $$/ $$$$$$$/  
+;;;
+;;;       ______                                                                           
+;;;      /      \                                                                          
+;;;  __ /$$$$$$  |                                                                         
+;;; /  |$$ ___$$ |                                                                         
+;;; $$/   /   $$<                                                                          
+;;;  __  _$$$$$  |                                                                         
+;;; /  |/  \__$$ |                                                                         
+;;; $$/ $$    $$/                                                                          
+;;;      $$$$$$/
+
+;;; init.el
+
+;;; Contents:
+;;;
+;;;  - Helper Functions
+;;;  - Basic Settings
+;;;  - Interface Enhancement
+;;;  - Editing Enhancement
+;;;  - Language Stuff
+;;;  - Minibuffer Stack
+;;;  - Major Modes
+;;;  - Emacs Configuration
+
+;;#----------------#;;
+;;# Basic Settings #;;
+;;#----------------#;;
 
 ;; Optimization
 (setq gc-cons-threshold 100000000)
@@ -13,13 +43,15 @@
           (lambda ()
             (setq gc-cons-threshold 16777216)))
 
-;;#-----------------------#;;
-;;# General Emacs Options #;;
-;;#-----------------------#;;
+;; Extra package repo
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
 
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
+(server-mode -1)
 (windmove-default-keybindings)
 
 (set-face-attribute 'default nil :family "Iosevka Nerd Font" :height 135 :weight 'normal)
@@ -28,6 +60,7 @@
 (setq-default tab-width 4)
 (setq-default cursor-type 'bar)
 (setq-default inhibit-startup-screen t)
+(setq-default frame-resize-pixelwise t)
 
 ;; Point backup and autosave files to somewhere else
 (make-directory "~/.local/share/emacs/auto-saves" t)
@@ -76,19 +109,19 @@
   :ensure t
   :custom
   (indent-bars-starting-column 0)
-  (indent-bars-no-descend-lists 'skip)
+  (indent-bars-no-descend-lists 'nil)
   (indent-bars-treesit-support t)
   (indent-bars-highlight-current-depth nil)
   (indent-bars-display-on-blank-lines t)
   (indent-bars-treesit-ignore-blank-lines-types '("module"))
   :config
   ;;(add-hook 'prog-mode-hook (lambda () (setq indent-tabs-mode t)))
-  (add-hook 'rust-ts-mode-hook (lambda () (setq indent-bars-no-descend-lists nil)))
+  (add-hook 'emacs-lisp-mode-hook (lambda () (setq indent-bars-no-descend-lists 'skip)))
   :hook
   ((prog-mode) . indent-bars-mode))
 
 ;; Restart Emacs command
-(use-package restart-emacs :ensure t)
+;; (use-package restart-emacs :ensure t)
 
 ;;#---------------------#;;
 ;;# Editing Enhancement #;;
@@ -140,9 +173,18 @@
 		  (lambda ()
 			(setq cursor-type (if multiple-cursors-mode 'box 'bar))))
 
-;;#---------------------------------#;;
-;;# LSP, Treesitter, Autocompletion #;;
-;;#---------------------------------#;;
+;; ;; God Mode
+;; (use-package god-mode
+;;   :ensure t
+;;   :config
+;;   (global-set-key (kbd "<escape>") #'god-local-mode)
+;;   :hook
+;;   (god-local-mode
+;;    . (lambda () (setq cursor-type (if god-local-mode 'box 'bar)))))
+
+;;#----------------#;;
+;;# Language Stuff #;;
+;;#----------------#;;
 
 ;; Autocompletion
 (use-package corfu
@@ -170,20 +212,63 @@
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
 
-;; LSP Client config
-(require 'eglot)
+;; Snippets
+(use-package yasnippet
+  :ensure t
+  :init
+  (yas-global-mode 1))
 
-(use-package rust-mode :ensure t) ;; Rust
-(add-to-list 'eglot-server-programs
-			 '((rust-ts-mode)
-			   . ("rust-analyzer" :initializationOptions (:check (:command "clippy")))))
+(use-package doom-snippets
+  :init
+  (unless (package-installed-p 'doom-snippets)
+	(package-vc-install
+	 '(doom-snippets
+	   :vc-backend Git
+	   :url "https://github.com/doomemacs/snippets"
+	   :branch "master")))
+  :after yasnippet)
 
-(use-package dart-mode :ensure t) ;; Dart
-(add-to-list 'eglot-server-programs
-			 '((dart-ts-mode)
-			   . ("dart" "language-server")))
+;; LSP Clients config
+;;
 
-(add-hook 'prog-mode-hook #'eglot-ensure)
+;; Simplicity: Eglot
+(use-package rust-mode :ensure t)
+(use-package eglot
+  :hook
+  (((rust-mode rust-ts-mode) . eglot-ensure)
+   ((python-mode python-ts-mode) . eglot-ensure)
+   ((lua-mode lua-ts-mode) . eglot-ensure))
+  :config
+  (add-to-list 'eglot-server-programs
+   			   '((rust-mode rust-ts-mode) . ("rust-analyzer" :initializationOptions
+											 (:check (:command "clippy")))))
+  (add-to-list 'eglot-server-programs
+   			   '((python-mode python-ts-mode) . ("pylsp")))
+  ;; (add-to-list 'eglot-server-programs
+  ;; 			   '((lua-mode lua-ts-mode) . ("lua-language-server")))
+  ;; (add-to-list 'eglot-server-programs
+  ;; 			   ((haskell-mode haskell-ts-mode) . ("haskell-language-server")))
+  )
+
+;; Full-featured: lsp-mode
+(use-package dart-mode :ensure t)
+(use-package lsp-dart :ensure t)
+(use-package flutter :ensure t)
+
+(use-package lsp-treemacs :ensure t)
+
+(use-package lsp-mode
+  :ensure t
+  :commands lsp
+  :hook
+  (dart-mode . lsp)
+  :custom
+  (lsp-dart-sdk-dir "/opt/flutter/bin/cache/dart-sdk/"))
+
+(use-package flycheck
+  :ensure t
+  :hook
+  ((lsp-managed-mode) . flycheck-mode))
 
 ;;#------------------#;;
 ;;# Minibuffer Stack #;;
@@ -229,6 +314,14 @@
   ;; the mode gets enabled right away. Note that this forces loading the
   ;; package.
   (marginalia-mode))
+
+;; Icons on the completion
+;; (use-package all-the-icons :ensure t)
+
+;; (use-package all-the-icons-completion
+;;   :ensure t
+;;   :init
+;;   (all-the-icons-completion-mode))
 
 ;; Persist history over Emacs restarts. Vertico sorts by history position.
 (use-package savehist
@@ -328,3 +421,7 @@
   
   :hook
   ((eat-mode compilation-mode org-mode dired-mode) . (lambda () (display-line-numbers-mode -1))))
+
+(provide 'init)
+
+;;; init.el ends here
